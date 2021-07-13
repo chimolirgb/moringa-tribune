@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect
-from django.http import HttpResponse, Http404,HttpResponseRedirect
+from django.http import HttpResponse, Http404,HttpResponseRedirect,JsonResponse
 import datetime as dt
 from .models import Article, NewsLetterRecipients
 from .forms import  NewArticleForm, NewsLetterForm
@@ -15,6 +15,7 @@ def welcome(request):
 def new_today(request):
     date = dt.date.today()
     news = Article.todays_news()
+    form = NewsLetterForm()
 
     if request.method == 'POST':
         form = NewsLetterForm(request.POST)
@@ -30,6 +31,15 @@ def new_today(request):
     else:
         form = NewsLetterForm()
     return render(request, 'all-news/today-news.html', {"date": date,"news":news,"letterForm":form})
+
+def newsletter(request):
+    name = request.POST.get('your_name')
+    email = request.POST.get('email')
+    recipient = NewsLetterRecipients(name=name, email=email)
+    recipient.save()
+    send_welcome_email(name, email)
+    data = {'success': 'You have been successfully added to mailing list'}
+    return JsonResponse(data) 
     
 
 def new_article(request):
@@ -95,4 +105,6 @@ def article(request,article_id):
     except Article.DoesNotExist:
         raise Http404()
     return render(request,"all-news/article.html", {"article":article})
+
+
 
